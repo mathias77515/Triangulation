@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import healpy as hp
+import scipy
 
 def save_pkl(dict, name):
     pickle.dump(dict, open('{}.pkl'.format(name), 'wb'))
@@ -79,11 +80,38 @@ class Coordinate:
 
 class Stats:
 
-    def __init__(self, conf):
-        self.CONF = conf
+    def __init__(self, npix):
+        self.oneSIG = 68
+        self.twoSIG = 95
+        self.threeSIG = 99.7
+        self.NPIX = npix
 
     def chi2(self, t_obs, t, sig):
         return ((t_obs - t)/sig)**2
+
+    def conf_area(self, tab):
+
+        delta_chi2_1 = scipy.stats.distributions.chi2.ppf(self.oneSIG/100,2)
+        delta_chi2_2 = scipy.stats.distributions.chi2.ppf(self.twoSIG/100,2)
+        delta_chi2_3 = scipy.stats.distributions.chi2.ppf(self.threeSIG/100,2)
+
+        min_tab = np.min(tab)
+
+        d_chi2_1 = min_tab + delta_chi2_1
+        d_chi2_2 = min_tab + delta_chi2_2
+        d_chi2_3 = min_tab + delta_chi2_3
+
+        conf_map = np.zeros(self.NPIX)
+
+        ind_1 = np.where(tab <= d_chi2_1)[0]
+        ind_2 = np.where(tab <= d_chi2_2)[0]
+        ind_3 = np.where(tab <= d_chi2_3)[0]
+
+        conf_map[ind_3] = self.threeSIG
+        conf_map[ind_2] = self.twoSIG
+        conf_map[ind_1] = self.oneSIG
+
+        return conf_map
 
 class Plots:
 
@@ -97,7 +125,7 @@ class Plots:
         tab[ind] = np.nan
 
         plt.figure()
-        hp.mollview(tab, cmap = 'tab10', cbar = True, title = 'Confidence area (in %)')
+        hp.mollview(tab, cmap = 'tab10', flip = 'geo', cbar = True, title = 'Confidence area (in %)')
         hp.visufunc.projscatter(self.RA*180/np.pi, self.DEC*180/np.pi, c = 'black', marker = 'x', lonlat=True)
         if type(name) is str:
             print('Saving...')

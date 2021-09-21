@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-import time
 import healpy as hp
-from tools import *
 from tqdm import tqdm
+from tools import *
+
 
 dict = open_pkl('constant')
 c = dict['c']
@@ -31,8 +31,8 @@ sigmatJUNOHK = dict['sig_JUNO_HK']
 sigmatJUNOKM3 = dict['sig_JUNO_KM3']
 sigmatSKJUNO = dict['sig_JUNO_SK']
 
-NSIDE = 64
-ntoy = 40000
+NSIDE = 128
+ntoy = 80000
 conf = 90
 
 
@@ -165,9 +165,11 @@ ind_3sig = np.where(chi2_tot == 1)[0]
 
 ### Sets the value of the contour
 
-chi2_tot_f[ind_1sig] = 68
-chi2_tot_f[ind_2sig] = 95
 chi2_tot_f[ind_3sig] = 99.7
+chi2_tot_f[ind_2sig] = 95
+chi2_tot_f[ind_1sig] = 68
+
+
 
 
 Plots(ra_true, dec_true).plot_with_differents_confs(chi2_tot_f, name = '{} - {}'.format(NSIDE, ntoy))
